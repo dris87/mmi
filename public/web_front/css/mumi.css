@@ -1,0 +1,229 @@
+.section-padding{
+    padding: 90px 0px;
+}
+.main-footer .logo img {
+    display: block;
+    max-width: 160px;
+}
+.main-footer .phone-num {
+    font-size: 15px;
+}
+
+.main-footer .list li:hover a {
+    color: #fff;
+}
+.main-footer .list li a {
+    color: #fff;
+}
+
+.main-footer .address, .main-footer .phone-num{
+    color: #fff;
+}
+.main-footer .about-widget a {
+    color: #1e7db5;
+}
+.footer-bottom *, .main-footer .copyright-text, .main-footer .copyright-text a, .main-footer .copyright-text a:hover{
+    color: #fff;
+}
+
+.dashboard-option .name {
+    color: white;
+}
+
+.requirement-item {
+    margin-bottom: 5px !important;
+}
+.job-requirement-group .list-style-three {
+    margin-bottom: 20px !important;
+    margin-left: 20px;
+}
+.job-requirement-list {
+    margin-left: 20px;
+}
+.requirement-title {
+    font-weight: 500;
+    color: #181818;
+}
+.job-locations .city, .job-shifts .job-shift{
+    padding-left: 0;
+    margin: 10px 0px;
+}
+.requirement-level {
+    display: block;
+    font-size: 11px;
+  /*  color: #ef9d2a;*/
+}
+
+.company-widget .company-info li span {
+    font-size: 15px;
+    line-height: 25px;
+    text-align: left;
+    color: #696969;
+    display: block;
+    width: 100%;
+}
+.related-jobs-mobile .job-detail-section .other-options{
+    margin-top: 20px;
+}
+/* Chrome, Safari, Edge, Opera */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* Firefox */
+input[type=number] {
+    -moz-appearance: textfield;
+}
+@media(max-width: 991px){
+    .job-detail-section .upper-box {
+        padding: 50px 0 20px;
+    }
+    .mobile-header {
+        padding: 15px 15px;
+    }
+}
+
+
+.job-block-three{
+    margin-top: 50px;
+}
+.job-detail-outer{
+    padding: 20px 0;
+}
+.company-profile-header {
+    position: relative;
+    margin-bottom: 100px;
+}
+.company-name-title {
+    margin-bottom: 30px;
+}
+.company-logo-web{
+    width: 200px;
+    height: 200px;
+    border: 1px solid #dee2e6;
+    background-size: contain;
+    background-position: center center;
+    background-repeat: no-repeat;
+    position: absolute;
+    bottom: -54%;
+    background-color: #ffffff;
+    left: 10%;
+    border-radius: 100px;
+}
+.cover-photo {
+    background-size: cover;
+    width: 100%;
+    height: 200px;
+    background-position: center center;
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-start;
+    border: 1px solid #dee2e6;
+    padding: 10px;
+    flex-direction: column-reverse;
+}
+.cover-photo label{
+    margin-bottom: 0;
+    cursor: pointer;
+}
+
+.mumi-select2-wrapper .select2-container--default .select2-selection--multiple {
+    background-color: transparent;
+    border-color: transparent !important;
+    border-radius: 0px;
+    cursor: text;
+    height: 100%;
+}
+.mumi-select2-wrapper.select2-selection__rendered {
+    height: 100%;
+}
+
+.mumi-select2-wrapper .select2-container {
+    height: auto !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    padding-top: 6px !important;
+    padding-bottom: 2px !important;
+}
+.select2-results__options{
+    background-color: #F0F5F7 !important;
+}
+.select2-dropdown {
+    border-radius: 0;
+    border-color: #ecedf2;
+}
+.mumi-select2-wrapper .select2-container--default .select2-results__option--highlighted[aria-selected] {
+    background-color: #1c75bc;
+    color: white;
+}
+
+.mumi-select2-wrapper .select2-container--default .select2-selection--multiple .select2-selection__rendered {
+    padding: 0 12px;
+}
+
+.alert{
+    display: block !important;
+}
+
+.alert2 {
+    position: relative;
+    padding: 0.75rem 1.25rem;
+    margin-bottom: 1rem;
+    border: 1px solid transparent;
+    border-radius: 0.25rem;
+}
+
+.alert2-secondary {
+    color: #383d41;
+    background-color: #e2e3e5;
+    border-color: #d6d8db;
+}
+
+.job-block {
+    position: relative;
+    margin-bottom: 15px;
+}
+
+.multiple-choices .chosen-choices{
+    padding-left: 56px;
+}
+
+.chosen-container-multi .chosen-choices li.search-choice .search-choice-close:before {
+    content: "\f00d";
+    font-family: 'Font Awesome 5 Free';
+    font-weight: 900;
+}
+
+.main-menu .navigation > li > ul > li > span, .main-menu .navigation > li > ul > li > a {
+
+    text-transform: initial;
+}
+
+.steps_icons{
+    font-size: 50px;
+    color: #1C75BC;
+    padding-bottom: 50px;
+}
+
+.advanced_filters{
+    display: none;
+}
+
+.advanced_filters_button{
+    width: 100%;
+    text-align: center;
+    float: left;
+}
+
+.social-links.job-card{
+    padding-top: 10px;
+}
+
+.social-links.job-card a i{
+    font-size: 18px;
+    color: #1b84d9;
+    padding-right: 5px;
+
+}

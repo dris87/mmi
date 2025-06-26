@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xmlszamla xmlns="http://www.szamlazz.hu/xmlszamla" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.szamlazz.hu/szamla/xmlszamla http://www.szamlazz.hu/szamla/docs/xsds/agent/xmlszamla.xsd">
+  <beallitasok>
+    <szamlaagentkulcs><![CDATA[8thmihykxvguq2t2emaif5jqay7s3mdkh9zrhfddwc]]></szamlaagentkulcs>
+    <eszamla><![CDATA[true]]></eszamla>
+    <kulcstartojelszo/>
+    <szamlaLetoltes><![CDATA[true]]></szamlaLetoltes>
+    <szamlaLetoltesPld><![CDATA[1]]></szamlaLetoltesPld>
+    <valaszVerzio><![CDATA[2]]></valaszVerzio>
+    <aggregator><![CDATA[telepocak.hu]]></aggregator>
+  </beallitasok>
+  <fejlec>
+    <keltDatum><![CDATA[2020-12-13]]></keltDatum>
+    <teljesitesDatum><![CDATA[2020-12-10]]></teljesitesDatum>
+    <fizetesiHataridoDatum><![CDATA[2020-12-20]]></fizetesiHataridoDatum>
+    <fizmod><![CDATA[átutalás]]></fizmod>
+    <penznem><![CDATA[HUF]]></penznem>
+    <szamlaNyelve><![CDATA[hu]]></szamlaNyelve>
+    <megjegyzes><![CDATA[ez a comment]]></megjegyzes>
+    <szamlaszamElotag><![CDATA[HG]]></szamlaszamElotag>
+    <szamlaSablon><![CDATA[SzlaMost]]></szamlaSablon>
+  </fejlec>
+  <elado>
+    <bank><![CDATA[K&H]]></bank>
+    <bankszamlaszam><![CDATA[11111111-22222222-33333333]]></bankszamlaszam>
+    <emailReplyto><![CDATA[hajcsak@@example.org]]></emailReplyto>
+    <emailTargy><![CDATA[Telepocak.hu szamla]]></emailTargy>
+    <emailSzoveg><![CDATA[
+Tisztelt [vevőneve]!<br><br>
+Mellékelten küldjük aktuális számláját. Amennyiben ezzel kapcsolatban bármilyen kérdése merülne fel, kérjük hívja Ügyfélszolgálatunkat, ahol munkatársaink készséggel állnak ügyfeleink rendelkezésére.<br><br>
+Üdvözlettel:<br>
+Hajcsak Gergely EV<br>]]></emailSzoveg>
+    <alairoNeve><![CDATA[Hajcsak Gergely]]></alairoNeve>
+  </elado>
+  <vevo>
+    <nev><![CDATA[Gulyas Tamas EV]]></nev>
+    <orszag/>
+    <irsz><![CDATA[2030]]></irsz>
+    <telepules><![CDATA[Érd]]></telepules>
+    <cim><![CDATA[Tarnoki street 23.]]></cim>
+    <email><![CDATA[gergely.hajcsak@gmail.com]]></email>
+    <sendEmail><![CDATA[true]]></sendEmail>
+    <adoalany><![CDATA[1]]></adoalany>
+    <adoszam><![CDATA[68065157-2-36]]></adoszam>
+    <telefonszam><![CDATA[+36301234567]]></telefonszam>
+  </vevo>
+  <fuvarlevel/>
+  <tetelek>
+    <tetel>
+      <megnevezes><![CDATA[Telepocak szolgaltatas]]></megnevezes>
+      <mennyiseg><![CDATA[1.0]]></mennyiseg>
+      <mennyisegiEgyseg><![CDATA[db]]></mennyisegiEgyseg>
+      <nettoEgysegar><![CDATA[35552.5]]></nettoEgysegar>
+      <afakulcs><![CDATA[27]]></afakulcs>
+      <nettoErtek><![CDATA[35552.5]]></nettoErtek>
+      <afaErtek><![CDATA[9599.175]]></afaErtek>
+      <bruttoErtek><![CDATA[45151.675]]></bruttoErtek>
+    </tetel>
+  </tetelek>
+</xmlszamla>
