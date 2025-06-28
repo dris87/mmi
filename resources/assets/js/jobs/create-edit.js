@@ -98,13 +98,37 @@ $(document).ready(function () {
         minDate: new Date(),
     }));
 
+    $('.releaseDatepicker').datetimepicker(DatetimepickerDefaults({
+        format: 'YYYY-MM-DD',
+        useCurrent: false,
+        sideBySide: true,
+        defaultDate: moment()
+    }));
+
     $('#createJobForm, #editJobForm').on('submit', function (e) {
         $('#saveJob,#draftJob').attr('disabled', true);
+    
+        // Description validáció
         if (!checkSummerNoteEmpty('#details',
             'Job Description field is required.', 1)) {
             e.preventDefault();
             $('#saveJob,#draftJob').attr('disabled', false);
             return false;
+        }
+        
+        // Tasks validáció (opcionális)
+        if ($('#tasks').summernote('code') === '<p><br></p>' || $('#tasks').summernote('code') === '') {
+            $('#tasks').summernote('code', '');
+        }
+        
+        // Advantages validáció (opcionális)
+        if ($('#advantages').summernote('code') === '<p><br></p>' || $('#advantages').summernote('code') === '') {
+            $('#advantages').summernote('code', '');
+        }
+        
+        // Perks validáció (opcionális)
+        if ($('#perks').summernote('code') === '<p><br></p>' || $('#perks').summernote('code') === '') {
+            $('#perks').summernote('code', '');
         }
         if ($('#salaryToErrorMsg').text() !== '') {
             $('#toSalary').focus();
@@ -121,6 +145,16 @@ $(document).ready(function () {
             ['style', ['bold', 'italic', 'underline', 'clear']],
             ['font', ['strikethrough']],
             ['para', ['paragraph']]],
+    });
+
+    $('#tasks, #advantages, #perks').summernote({
+        minHeight: 150,
+        height: 150,
+        toolbar: [
+            ['style', ['bold', 'italic', 'underline', 'clear']],
+            ['font', ['strikethrough']],
+            ['para', ['paragraph']]
+        ],
     });
 
     $('#jobTypeDescription, #jobCategoryDescription, #skillDescription, #salaryPeriodDescription, #jobShiftDescription, #jobTagDescription').summernote({
