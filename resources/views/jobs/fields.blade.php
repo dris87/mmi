@@ -41,10 +41,6 @@
             </div>
         </div>
     </div>
-    <div class="form-group col-xl-4 col-md-4 col-sm-12">
-        {{ Form::label('no_preference', __('messages.candidate.gender').':') }}
-        {{ Form::select('no_preference', $data['preference'], null, ['id'=>'preferenceId','class' => 'form-control','placeholder' => 'Select Gender']) }}
-    </div>
     <div class="form-group col-xl-4 col-md-4 col-sm-12 custom-datepicker">
         {{ Form::label('job_expiry_date', __('messages.job.job_expiry_date').':') }} <span class="text-danger">*</span>
         <div class="input-group">

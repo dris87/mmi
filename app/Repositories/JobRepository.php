@@ -1,18 +1,18 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Repositories;
 
 use App\Mail\EmailJobToFriend;
 use App\Mail\EmailToCandidate;
 use App\Models\Candidate;
-use App\Models\CandidateDrivingLicences;
 use App\Models\CareerLevel;
 use App\Models\City;
 use App\Models\Company;
 use App\Models\DrivingLicences;
 use App\Models\EmailJob;
 use App\Models\EmailTemplate;
-use App\Models\Factories\CityFactory;
 use App\Models\Factories\JobAssignedCategoryFactory;
 use App\Models\Factories\JobAssignedShiftFactory;
 use App\Models\Factories\JobAssignedTypeFactory;
@@ -32,7 +32,6 @@ use App\Models\FunctionalArea;
 use App\Models\Job;
 use App\Models\JobApplication;
 use App\Models\JobCategory;
-use App\Models\JobChange;
 use App\Models\JobRequirementType;
 use App\Models\JobShift;
 use App\Models\JobType;
@@ -47,8 +46,6 @@ use App\Models\SalaryPeriod;
 use App\Models\Skill;
 use App\Models\Tag;
 use App\Models\User;
-use DB;
-use Exception;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
@@ -60,7 +57,8 @@ use PragmaRX\Countries\Package\Countries;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
 /**
- * Class JobRepository
+ * Class JobRepository.
+ *
  * @version July 12, 2020, 12:34 pm UTC
  */
 class JobRepository extends BaseRepository
@@ -75,7 +73,7 @@ class JobRepository extends BaseRepository
     ];
 
     /**
-     * Return searchable fields
+     * Return searchable fields.
      *
      * @return array
      */
@@ -85,8 +83,8 @@ class JobRepository extends BaseRepository
     }
 
     /**
-     * Configure the Model
-     **/
+     * Configure the Model.
+     */
     public function model()
     {
         return Job::class;
@@ -147,6 +145,7 @@ class JobRepository extends BaseRepository
             if ($isExist) {
                 self::getUniqueJobId();
             }
+
             break;
         }
 
@@ -155,75 +154,72 @@ class JobRepository extends BaseRepository
 
     public function saveJobChange(Job $job, array $formData)
     {
-        DB::beginTransaction();
+        \DB::beginTransaction();
         $jobChangeFactory = new JobChangeFactory();
         $objJobChange = $jobChangeFactory->getPendingChangeByJob($job);
-        if($objJobChange){
+        if ($objJobChange) {
             $jobChangeFactory->update($objJobChange, $formData);
-        }
-        else{
+        } else {
             $objJobChange = $jobChangeFactory->create($job, $formData);
         }
 
-        DB::commit();
+        \DB::commit();
 
         $job->update(['status' => Job::STATUS_PENDING]);
 
         return $objJobChange;
     }
+
     /**
-     * @param  array  $input
+     * @param array      $input
+     * @param null|mixed $job
+     *
+     * @throws \Throwable
      *
      * @return Job|Model
-     *@throws \Throwable
      */
     public function store($input, $job = null)
     {
         try {
-
-            DB::beginTransaction();
+            \DB::beginTransaction();
 
             $input['company_id'] = (isset($input['company_id'])) ? $input['company_id'] : Auth::user()->owner_id;
-            if($job){
+            if ($job) {
                 $input['job_id'] = $job->job_id;
-            }
-            else {
+            } else {
                 $input['job_id'] = $this->getUniqueJobId();
             }
-            if(empty($input['job_title'])){
+            if (empty($input['job_title'])) {
                 $input['job_title'] = trans('messages.job.draft_title').' #'.$input['job_id'];
             }
-            /** @var Job $job */
 
+            /** @var Job $job */
             if (Auth::user()->hasRole('Admin') && !$job) {
                 $input['is_created_by_admin'] = 1;
-            }
-            else{
+            } else {
                 $input['is_created_by_admin'] = 0;
             }
 
             $jobData = [
                 'job_id' => $input['job_id'],
-                'company_id' => $input['company_id'],
-                'job_title' => $input['job_title'],
-                'position' => $input['job_position'],
-                'description' => $input['description'],
-                'tasks' => $input['tasks'],
-                'advantages' => $input['advantages'],
-                'perks' => $input['perks'],
-                'candidate_count' => $input['job_candidate_count'],
+                'job_title' => $input['job_title'] ?? trans('messages.job.draft_title'),
+                'description' => $input['description'] ?? '',
+                'tasks' => $input['tasks'] ?? '',
+                'perks' => $input['perks'] ?? '',
+                'advantages' => $input['advantages'] ?? '',
+                'position' => $input['job_position'] ?? $input['position'] ?? '',  // FONTOS: job_position -> position
+                'candidate_count' => $input['job_candidate_count'] ?? $input['candidate_count'] ?? 1,  // FONTOS: job_candidate_count -> candidate_count
                 'job_expiry_date' => $input['job_expiry_date'],
-                'job_release_date' => $input['job_release_date'],
-                'is_anonym' => $input['is_anonym'],
-                'status' => $input['status'],
-                'is_created_by_admin' => $input['is_created_by_admin'],
+                'job_release_date' => $input['job_release_date'] ?? Carbon::now()->format('Y-m-d'),
+                'is_anonym' => $input['is_anonym'] ?? 0,
+                'status' => $input['status'] ?? Job::STATUS_DRAFT,
+                'company_id' => $input['company_id'],
             ];
 
-            if(!$job) {
-                $job = $this->create($jobData);
-            }
-            else{
-                $this->update($jobData, $job);
+            if ($job) {
+                $job->update($jobData);
+            } else {
+                $job = Job::create($jobData);
             }
 
             $jobEducationFactory = new JobEducationFactory();
@@ -238,11 +234,9 @@ class JobRepository extends BaseRepository
             $jobAssignedShiftFactory = new JobAssignedShiftFactory();
             $jobDrivingLicenseFactory = new JobDrivingLicenseFactory();
 
-
-            if (isset($input['job_locations']) && ! empty($input['job_locations'])) {
+            if (isset($input['job_locations']) && !empty($input['job_locations'])) {
                 $data = [];
-                foreach($input['job_locations'] as $item){
-
+                foreach ($input['job_locations'] as $item) {
                     $objPostalCode = (new PostalCodeFactory())->getByCityId($item);
 
                     $data[] = [
@@ -254,37 +248,34 @@ class JobRepository extends BaseRepository
                 $save = $jobLocationFactory->createOrUpdate($job, $data);
 
                 if (!$save) {
-                    throw new Exception("Hiba mentés közben");
+                    throw new \Exception('Hiba mentés közben');
                 }
-            }
-            else{
+            } else {
                 $jobLocationFactory->clearByJob($job);
             }
-            if (isset($input['job_types']) && ! empty($input['job_types'])) {
+            if (isset($input['job_types']) && !empty($input['job_types'])) {
                 $data = [];
-                if(is_array($input['job_types'])) {
+                if (\is_array($input['job_types'])) {
                     foreach ($input['job_types'] as $item) {
                         $data[] = [
                             'job_type_id' => $item,
                         ];
                     }
-                }
-                else{
+                } else {
                     $data[0]['job_type_id'] = $input['job_types'];
                 }
 
                 $save = $jobAssignedTypesFactory->createOrUpdate($job, $data);
 
                 if (!$save) {
-                    throw new Exception("Hiba mentés közben");
+                    throw new \Exception('Hiba mentés közben');
                 }
-            }
-            else{
+            } else {
                 $jobAssignedTypesFactory->clearByJob($job);
             }
-            if (isset($input['job_shifts']) && ! empty($input['job_shifts'])) {
+            if (isset($input['job_shifts']) && !empty($input['job_shifts'])) {
                 $data = [];
-                foreach($input['job_shifts'] as $item){
+                foreach ($input['job_shifts'] as $item) {
                     $data[] = [
                         'job_shift_id' => $item,
                     ];
@@ -293,16 +284,15 @@ class JobRepository extends BaseRepository
                 $save = $jobAssignedShiftFactory->createOrUpdate($job, $data);
 
                 if (!$save) {
-                    throw new Exception("Hiba mentés közben");
+                    throw new \Exception('Hiba mentés közben');
                 }
-            }
-            else{
+            } else {
                 $jobAssignedShiftFactory->clearByJob($job);
             }
 
-            if (isset($input['job_categories']) && ! empty($input['job_categories'])) {
+            if (isset($input['job_categories']) && !empty($input['job_categories'])) {
                 $data = [];
-                foreach($input['job_categories'] as $item){
+                foreach ($input['job_categories'] as $item) {
                     $data[] = [
                         'job_category_id' => $item,
                     ];
@@ -311,55 +301,51 @@ class JobRepository extends BaseRepository
                 $save = $jobAssignedCategoryFactory->createOrUpdate($job, $data);
 
                 if (!$save) {
-                    throw new Exception("Hiba mentés közben");
+                    throw new \Exception('Hiba mentés közben');
                 }
-            }
-            else{
+            } else {
                 $jobAssignedCategoryFactory->clearByJob($job);
             }
 
-            if(isset($input['jobRequirements'])){
+            if (isset($input['jobRequirements'])) {
                 $requirements = $input['jobRequirements'];
                 if (isset($requirements['education']) && !empty($requirements['education'])) {
-
                     $data = [];
-                    foreach($requirements['education'] as $item){
+                    foreach ($requirements['education'] as $item) {
                         $data[] = [
                             'name' => $item['education_name'] ?: '',
-                            'degree_level_id' => $item['education_level']
+                            'degree_level_id' => $item['education_level'],
                         ];
                     }
 
                     $saveEducations = $jobEducationFactory->createOrUpdate($job, $data);
 
                     if (!$saveEducations) {
-                        throw new Exception("Hiba mentés közben");
+                        throw new \Exception('Hiba mentés közben');
                     }
-                }
-                else{
+                } else {
                     $jobEducationFactory->clearByJob($job);
                 }
-                if (isset($requirements['experience']) && ! empty($requirements['experience'])) {
+                if (isset($requirements['experience']) && !empty($requirements['experience'])) {
                     $data = [];
-                    foreach($requirements['experience'] as $item){
+                    foreach ($requirements['experience'] as $item) {
                         $data[] = [
                             'position' => $item['experience_position'] ?: '',
-                            'years' => $item['experience_years'] ?: ''
+                            'years' => $item['experience_years'] ?: '',
                         ];
                     }
 
                     $saveExperience = $jobExperienceFactory->createOrUpdate($job, $data);
 
                     if (!$saveExperience) {
-                        throw new Exception("Hiba mentés közben");
+                        throw new \Exception('Hiba mentés közben');
                     }
-                }
-                else{
+                } else {
                     $jobExperienceFactory->clearByJob($job);
                 }
-                if (isset($requirements['drivers_license']) && ! empty($requirements['drivers_license'])) {
+                if (isset($requirements['drivers_license']) && !empty($requirements['drivers_license'])) {
                     $data = [];
-                    foreach($requirements['drivers_license'] as $item){
+                    foreach ($requirements['drivers_license'] as $item) {
                         $data[] = [
                             'driving_license_id' => $item['drivers_license_id'],
                         ];
@@ -367,16 +353,15 @@ class JobRepository extends BaseRepository
                     $save = $jobDrivingLicenseFactory->createOrUpdate($job, $data);
 
                     if (!$save) {
-                        throw new Exception("Hiba mentés közben");
+                        throw new \Exception('Hiba mentés közben');
                     }
-                }
-                else{
+                } else {
                     $jobDrivingLicenseFactory->clearByJob($job);
                 }
 
-                if (isset($requirements['it_skill']) && ! empty($requirements['it_skill'])) {
+                if (isset($requirements['it_skill']) && !empty($requirements['it_skill'])) {
                     $data = [];
-                    foreach($requirements['it_skill'] as $item){
+                    foreach ($requirements['it_skill'] as $item) {
                         $data[] = [
                             'name' => $item['it_skill_name'] ?: '',
                             'skill_level_id' => $item['it_skill_level'],
@@ -386,16 +371,15 @@ class JobRepository extends BaseRepository
                     $saveItSkill = $jobItSkillFactory->createOrUpdate($job, $data);
 
                     if (!$saveItSkill) {
-                        throw new Exception("Hiba mentés közben");
+                        throw new \Exception('Hiba mentés közben');
                     }
-                }
-                else{
+                } else {
                     $jobItSkillFactory->clearByJob($job);
                 }
 
-                if (isset($requirements['software_skill']) && ! empty($requirements['software_skill'])) {
+                if (isset($requirements['software_skill']) && !empty($requirements['software_skill'])) {
                     $data = [];
-                    foreach($requirements['software_skill'] as $item){
+                    foreach ($requirements['software_skill'] as $item) {
                         $data[] = [
                             'name' => $item['software_skill_name'] ?: '',
                             'skill_level_id' => $item['software_skill_level'],
@@ -405,15 +389,14 @@ class JobRepository extends BaseRepository
                     $saveSoftwareSkill = $jobSoftwareSkillFactory->createOrUpdate($job, $data);
 
                     if (!$saveSoftwareSkill) {
-                        throw new Exception("Hiba mentés közben");
+                        throw new \Exception('Hiba mentés közben');
                     }
-                }
-                else{
+                } else {
                     $jobSoftwareSkillFactory->clearByJob($job);
                 }
-                if (isset($requirements['language_skill']) && ! empty($requirements['language_skill'])) {
+                if (isset($requirements['language_skill']) && !empty($requirements['language_skill'])) {
                     $data = [];
-                    foreach($requirements['language_skill'] as $item) {
+                    foreach ($requirements['language_skill'] as $item) {
                         $data[] = [
                             'language_id' => $item['language_skill_id'],
                             'language_level_id' => $item['language_skill_level'],
@@ -422,15 +405,14 @@ class JobRepository extends BaseRepository
                     $saveLanguageSkill = $jobLanguageSkillFactory->createOrUpdate($job, $data);
 
                     if (!$saveLanguageSkill) {
-                        throw new Exception("Hiba mentés közben");
+                        throw new \Exception('Hiba mentés közben');
                     }
-                }
-                else{
+                } else {
                     $jobLanguageSkillFactory->clearByJob($job);
                 }
-                if (isset($requirements['personal_skill']) && ! empty($requirements['personal_skill'])) {
+                if (isset($requirements['personal_skill']) && !empty($requirements['personal_skill'])) {
                     $data = [];
-                    foreach($requirements['personal_skill'] as $item){
+                    foreach ($requirements['personal_skill'] as $item) {
                         $data[] = [
                             'name' => $item['personal_skill_name'] ?: '',
                         ];
@@ -439,14 +421,12 @@ class JobRepository extends BaseRepository
                     $savePersonalSkill = $jobPersonalSkillFactory->createOrUpdate($job, $data);
 
                     if (!$savePersonalSkill) {
-                        throw new Exception("Hiba mentés közben");
+                        throw new \Exception('Hiba mentés közben');
                     }
-                }
-                else{
+                } else {
                     $jobPersonalSkillFactory->clearByJob($job);
                 }
-            }
-            else{
+            } else {
                 $jobEducationFactory->clearByJob($job);
                 $jobExperienceFactory->clearByJob($job);
                 $jobItSkillFactory->clearByJob($job);
@@ -455,86 +435,100 @@ class JobRepository extends BaseRepository
                 $jobPersonalSkillFactory->clearByJob($job);
                 $jobDrivingLicenseFactory->clearByJob($job);
             }
-            DB::commit();
-//            /** @var JobType $jobType */
-//            $jobType = JobType::with('candidateJobAlerts')->whereId($input['job_type_id'])->first();
-//            $userIds = $jobType->candidateJobAlerts->where('job_alert', '=', 1)->pluck('user_id');
-//            $notificationAlertUserIds = $jobType->candidateJobAlerts->pluck('user_id');
-//            $users = User::whereIn('id', $userIds)->get();
-//            $notificationAlertUsers = User::whereIn('id', $notificationAlertUserIds)->get();
-//            if ($job->status != Job::STATUS_DRAFT) {
-//                foreach ($notificationAlertUsers as $user) {
-//                    NotificationSetting::whereKey(Notification::JOB_ALERT)->first()->value == 1 ?
-//                        addNotification([
-//                            Notification::JOB_ALERT,
-//                            $user->id,
-//                            Notification::CANDIDATE,
-//                            'New job posted with '.$job->job_title.', if you are interested then you can apply for this job.',
-//                        ]) : false;
-//                }
-//                /** @var EmailTemplate $templateBody */
-//                $templateBody = EmailTemplate::whereTemplateName('Job Alert')->first();
-//                foreach ($users as $user) {
-//                    $job->name = $user->full_name;
-//                    $keyVariable = ['{{job_name}}', '{{job_url}}', '{{job_title}}', '{{from_name}}'];
-//                    $value = [$job->name, asset('/job-details/'.$job->job_id), $job->job_title, config('app.name')];
-//                    $body = str_replace($keyVariable, $value, $templateBody->body);
-//                    $data['body'] = $body;
-//                    Mail::to($user->email)->send(new EmailToCandidate($data));
-//                }
-//            }
+
+            if (isset($requirements['drivers_license']) && !empty($requirements['drivers_license'])) {
+                $jobDrivingLicenseFactory = new JobDrivingLicenseFactory();
+                $data = [];
+                foreach ($requirements['drivers_license'] as $item) {
+                    if (!empty($item['drivers_license_id'])) {  // FONTOS: már drivers_license_id van, nem drivers_license_name
+                        $data[] = ['driving_license_id' => $item['drivers_license_id']];
+                    }
+                }
+                $jobDrivingLicenseFactory->createOrUpdate($job, $data);
+            } else {
+                $jobDrivingLicenseFactory->clearByJob($job);
+            }
+            \DB::commit();
+            //            /** @var JobType $jobType */
+            //            $jobType = JobType::with('candidateJobAlerts')->whereId($input['job_type_id'])->first();
+            //            $userIds = $jobType->candidateJobAlerts->where('job_alert', '=', 1)->pluck('user_id');
+            //            $notificationAlertUserIds = $jobType->candidateJobAlerts->pluck('user_id');
+            //            $users = User::whereIn('id', $userIds)->get();
+            //            $notificationAlertUsers = User::whereIn('id', $notificationAlertUserIds)->get();
+            //            if ($job->status != Job::STATUS_DRAFT) {
+            //                foreach ($notificationAlertUsers as $user) {
+            //                    NotificationSetting::whereKey(Notification::JOB_ALERT)->first()->value == 1 ?
+            //                        addNotification([
+            //                            Notification::JOB_ALERT,
+            //                            $user->id,
+            //                            Notification::CANDIDATE,
+            //                            'New job posted with '.$job->job_title.', if you are interested then you can apply for this job.',
+            //                        ]) : false;
+            //                }
+            //                /** @var EmailTemplate $templateBody */
+            //                $templateBody = EmailTemplate::whereTemplateName('Job Alert')->first();
+            //                foreach ($users as $user) {
+            //                    $job->name = $user->full_name;
+            //                    $keyVariable = ['{{job_name}}', '{{job_url}}', '{{job_title}}', '{{from_name}}'];
+            //                    $value = [$job->name, asset('/job-details/'.$job->job_id), $job->job_title, config('app.name')];
+            //                    $body = str_replace($keyVariable, $value, $templateBody->body);
+            //                    $data['body'] = $body;
+            //                    Mail::to($user->email)->send(new EmailToCandidate($data));
+            //                }
+            //            }
 
             return $job;
+        } catch (\Exception $e) {
+            \DB::rollBack();
 
-        } catch (Exception $e) {
-            DB::rollBack();
             throw new UnprocessableEntityHttpException($e->getMessage());
         }
     }
 
     /**
-     * @param  array  $input
-     * @param  Job  $job
+     * @param array $input
+     * @param Job   $job
      *
      * @throws \Throwable
+     *
      * @return bool|Builder|Builder[]|Collection|Model
      */
     public function update($input, $job)
     {
         try {
-            DB::beginTransaction();
-//            $input['salary_from'] = (float) removeCommaFromNumbers($input['salary_from']);
-//            $input['salary_to'] = (float) removeCommaFromNumbers($input['salary_to']);
-//            // update Job
-//            if (isset($input['state_id']) && ! is_numeric($input['state_id'])) {
-//                $input['state_id'] = null;
-//            }
-//            if ($job->status == Job::STATUS_DRAFT) {
-//                $job->status = Job::STATUS_ACTIVE;
-//            }
+            \DB::beginTransaction();
+            //            $input['salary_from'] = (float) removeCommaFromNumbers($input['salary_from']);
+            //            $input['salary_to'] = (float) removeCommaFromNumbers($input['salary_to']);
+            //            // update Job
+            //            if (isset($input['state_id']) && ! is_numeric($input['state_id'])) {
+            //                $input['state_id'] = null;
+            //            }
+            //            if ($job->status == Job::STATUS_DRAFT) {
+            //                $job->status = Job::STATUS_ACTIVE;
+            //            }
             $job->update($input);
-//
-//            if (isset($input['jobsSkill']) && ! empty($input['jobsSkill'])) {
-//                $job->jobsSkill()->sync($input['jobsSkill']);
-//            }
-//            if (isset($input['jobTag']) && ! empty($input['jobTag'])) {
-//                $job->jobsTag()->sync($input['jobTag']);
-//            } else {
-//                $job->jobsTag()->sync([]);
-//            }
+            //
+            //            if (isset($input['jobsSkill']) && ! empty($input['jobsSkill'])) {
+            //                $job->jobsSkill()->sync($input['jobsSkill']);
+            //            }
+            //            if (isset($input['jobTag']) && ! empty($input['jobTag'])) {
+            //                $job->jobsTag()->sync($input['jobTag']);
+            //            } else {
+            //                $job->jobsTag()->sync([]);
+            //            }
 
-            DB::commit();
+            \DB::commit();
 
             return true;
-        } catch (Exception $e) {
-            DB::rollBack();
+        } catch (\Exception $e) {
+            \DB::rollBack();
 
             throw new UnprocessableEntityHttpException($e->getMessage());
         }
     }
 
     /**
-     * @param  int  $jobId
+     * @param int $jobId
      *
      * @return mixed
      */
@@ -544,7 +538,7 @@ class JobRepository extends BaseRepository
     }
 
     /**
-     * @param  int  $jobId
+     * @param int $jobId
      *
      * @return mixed
      */
@@ -554,8 +548,6 @@ class JobRepository extends BaseRepository
     }
 
     /**
-     * @param  Job  $job
-     *
      * @return mixed
      */
     public function getJobDetails(Job $job)
@@ -570,24 +562,39 @@ class JobRepository extends BaseRepository
         $jobApplicationRepo = app(JobApplicationRepository::class);
 
         // check candidate is already applied for job
-        $data['isApplied'] = $jobApplicationRepo->checkJobStatus($job->id, $candidate->id,
-            JobApplication::STATUS_APPLIED);
+        $data['isApplied'] = $jobApplicationRepo->checkJobStatus(
+            $job->id,
+            $candidate->id,
+            JobApplication::STATUS_APPLIED
+        );
 
         // check job is drafted
         $data['isJobDrafted'] = $data['isJobApplicationRejected'] = $data['isJobApplicationCompleted'] = false;
-        if (! $data['isApplied']) {
+        if (!$data['isApplied']) {
             // check job is drafted or not
-            $data['isJobDrafted'] = $jobApplicationRepo->checkJobStatus($job->id, $candidate->id,
-                JobApplication::STATUS_DRAFT);
+            $data['isJobDrafted'] = $jobApplicationRepo->checkJobStatus(
+                $job->id,
+                $candidate->id,
+                JobApplication::STATUS_DRAFT
+            );
 
-            $data['isJobApplicationShortlisted'] = $jobApplicationRepo->checkJobStatus($job->id, $candidate->id,
-                JobApplication::SHORT_LIST);
+            $data['isJobApplicationShortlisted'] = $jobApplicationRepo->checkJobStatus(
+                $job->id,
+                $candidate->id,
+                JobApplication::SHORT_LIST
+            );
 
-            $data['isJobApplicationRejected'] = $jobApplicationRepo->checkJobStatus($job->id, $candidate->id,
-                JobApplication::REJECTED);
+            $data['isJobApplicationRejected'] = $jobApplicationRepo->checkJobStatus(
+                $job->id,
+                $candidate->id,
+                JobApplication::REJECTED
+            );
 
-            $data['isJobApplicationCompleted'] = $jobApplicationRepo->checkJobStatus($job->id, $candidate->id,
-                JobApplication::COMPLETE);
+            $data['isJobApplicationCompleted'] = $jobApplicationRepo->checkJobStatus(
+                $job->id,
+                $candidate->id,
+                JobApplication::COMPLETE
+            );
         }
 
         $data['isJobAddedToFavourite'] = $this->isJobAddedToFavourite($job->id);
@@ -597,7 +604,7 @@ class JobRepository extends BaseRepository
     }
 
     /**
-     * @param $input
+     * @param mixed $input
      *
      * @return bool
      */
@@ -606,14 +613,14 @@ class JobRepository extends BaseRepository
         $job = Job::findOrFail($input['jobId']);
         $jobUser = Company::with('user')->findOrFail($job->company_id);
         $favouriteJob = FavouriteJob::where('user_id', $input['userId'])->where('job_id', $input['jobId'])->exists();
-        if (! $favouriteJob) {
+        if (!$favouriteJob) {
             FavouriteJob::create([
                 'user_id' => $input['userId'],
-                'job_id'  => $input['jobId'],
+                'job_id' => $input['jobId'],
             ]);
             $loggedInUser = getLoggedInUser();
-            NotificationSetting::whereKey(Notification::FOLLOW_JOB)->first()->value == 1 ?
-                addNotification([
+            1 === NotificationSetting::whereKey(Notification::FOLLOW_JOB)->first()->value
+                ? addNotification([
                     Notification::FOLLOW_JOB,
                     $jobUser->user->id,
                     Notification::EMPLOYER,
@@ -621,24 +628,24 @@ class JobRepository extends BaseRepository
                 ]) : false;
 
             return true;
-        } else {
-            FavouriteJob::where('user_id', $input['userId'])->where('job_id', $input['jobId'])->delete();
-
-            return false;
         }
+        FavouriteJob::where('user_id', $input['userId'])->where('job_id', $input['jobId'])->delete();
+
+        return false;
     }
 
     /**
-     * @param $input
-     *
+     * @param mixed $input
      *
      * @return bool
      */
     public function storeReportJobAbuse($input)
     {
-        $jobReportedAsAbuse = ReportedJob::where('user_id', $input['userId'])->where('job_id',
-            $input['jobId'])->exists();
-        if (! $jobReportedAsAbuse) {
+        $jobReportedAsAbuse = ReportedJob::where('user_id', $input['userId'])->where(
+            'job_id',
+            $input['jobId']
+        )->exists();
+        if (!$jobReportedAsAbuse) {
             $reportedJobNote = trim($input['note']);
             if (empty($reportedJobNote)) {
                 throw ValidationException::withMessages([
@@ -647,8 +654,8 @@ class JobRepository extends BaseRepository
             }
             ReportedJob::create([
                 'user_id' => $input['userId'],
-                'job_id'  => $input['jobId'],
-                'note'    => $input['note'],
+                'job_id' => $input['jobId'],
+                'note' => $input['note'],
             ]);
 
             return true;
@@ -658,17 +665,18 @@ class JobRepository extends BaseRepository
     }
 
     /**
-     * @param $input
+     * @param mixed $input
      *
      * @return bool
      */
     public function emailJobToFriend($input)
     {
         try {
-            DB::beginTransaction();
+            \DB::beginTransaction();
 
             /** @var EmailJob $emailJob */
             $emailJob = EmailJob::create($input);
+
             /** @var EmailTemplate $templateBody */
             $templateBody = EmailTemplate::whereTemplateName('Email Job To Friend')->first()['body'];
             $keyVariable = ['{{friend_name}}', '{{job_url}}', '{{from_name}}'];
@@ -677,18 +685,18 @@ class JobRepository extends BaseRepository
             $data['body'] = $body;
             Mail::to($input['friend_email'])->send(new EmailJobToFriend($data));
 
-            DB::commit();
+            \DB::commit();
 
             return true;
-        } catch (Exception $e) {
-            DB::rollBack();
+        } catch (\Exception $e) {
+            \DB::rollBack();
 
             throw new UnprocessableEntityHttpException($e->getMessage());
         }
     }
 
     /**
-     * @throws Exception
+     * @throws \Exception
      *
      * @return bool
      */
@@ -704,7 +712,7 @@ class JobRepository extends BaseRepository
 
         if ($subscription) {
             // retrieve job count
-            $jobCount = Job::query()->where('company_id', $company->id)->where('is_created_by_admin',0)->count();
+            $jobCount = Job::query()->where('company_id', $company->id)->where('is_created_by_admin', 0)->count();
 
             $maxJobCount = Plan::whereId($subscription->plan_id)->value('allowed_jobs');
 
@@ -717,15 +725,17 @@ class JobRepository extends BaseRepository
     }
 
     /**
-     * @param $reportedJobID
+     * @param mixed $reportedJobID
      *
-     * @return Builder|Builder[]|Collection|Model|null
+     * @return null|Builder|Builder[]|Collection|Model
      */
     public function getReportedJobs($reportedJobID)
     {
         return ReportedJob::with(['user.candidate', 'job.company'])->without([
             'user.media', 'user.country', 'user.state', 'user.city',
-        ])->select('reported_jobs.*')->orderBy('created_at',
-            'desc')->findOrFail($reportedJobID);
+        ])->select('reported_jobs.*')->orderBy(
+            'created_at',
+            'desc'
+        )->findOrFail($reportedJobID);
     }
 }
