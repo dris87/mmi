@@ -128,8 +128,7 @@ class JobRepository extends BaseRepository
         $data['jobTag'] = Tag::pluck('name', 'id');
         $data['requiredDegreeLevel'] = RequiredDegreeLevel::pluck('name', 'id');
         $data['countries'] = getCountries();
-        $data['companies'] = []; /*Company::with('user')->get()->where('user.is_active', '=', 1)
-            ->pluck('user.full_name', 'id')->sort();*/
+        $data['companies'] = Company::with('user')->get()->pluck('user.full_name', 'id')->sort();
 
         return $data;
     }

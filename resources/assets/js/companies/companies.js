@@ -1,6 +1,121 @@
 'use strict';
 
 $(document).ready(function () {
+    let tableName = '#companyTbl';
+    $(tableName).DataTable({
+        processing: true,
+        serverSide: true,
+        'order': [[1, 'asc']],
+        ajax: {
+            url: getCompaniesUrl,
+            type: 'GET'
+        },
+        columnDefs: [
+            {
+                'targets': [0],
+                'searchable': false,
+                'orderable': false,
+                'className': 'text-center',
+                'width': '5%',
+            },
+            {
+                'targets': [1],
+                'className': 'text-center',
+                'width': '8%',
+            },
+            {
+                'targets': [2],
+                'className': 'text-left',
+                'width': '15%',
+            },
+            {
+                'targets': [3],
+                'className': 'text-left',
+                'width': '15%',
+            },
+            {
+                'targets': [4],
+                'className': 'text-left',
+                'width': '15%',
+            },
+            {
+                'targets': [5],
+                'className': 'text-center',
+                'width': '12%',
+            },
+            {
+                'targets': [6],
+                'className': 'text-center',
+                'width': '12%',
+            },
+            {
+                'targets': [7],
+                'className': 'text-center',
+                'width': '10%',
+            },
+            {
+                'targets': [8],
+                'className': 'text-center',
+                'width': '8%',
+                'orderable': false,
+            }
+        ],
+        columns: [
+            {
+                data: function (row) {
+                    return '<input type="checkbox" name="companies[]" class="companyCheckBox" value="' + row.id + '">';
+                },
+                name: 'id'
+            },
+            {
+                data: 'id',
+                name: 'id'
+            },
+            {
+                data: 'name',
+                name: 'name'
+            },
+            {
+                data: 'contact_name',
+                name: 'contact_name'
+            },
+            {
+                data: function (row) {
+                    return row.contact_person_phone || row.phone || '-';
+                },
+                name: 'phone'
+            },
+            {
+                data: 'support',
+                name: 'support'
+            },
+            {
+                data: 'latest_activity',
+                name: 'latest_activity'
+            },
+            {
+                data: 'status',
+                name: 'status'
+            },
+            {
+                data: function (row) {
+                    return '<a title="Edit" class="btn btn-warning action-btn edit-btn" href="' + companiesUrl + '/' + row.id + '/edit">' +
+                           '<i class="fa fa-edit"></i></a> ' +
+                           '<a title="Delete" class="btn btn-danger action-btn delete-btn" data-id="' + row.id + '" href="#">' +
+                           '<i class="fa fa-trash"></i></a>';
+                },
+                name: 'id'
+            }
+        ]
+    });
+
+    $('#filter_featured').select2({
+        width: '170px',
+    });
+    $('#filter_status').select2();
+});
+
+$(document).ready(function () {
     $('#filter_featured').select2({
         width: '170px',
     });

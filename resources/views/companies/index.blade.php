@@ -4,9 +4,8 @@
 @endsection
 @push('css')
     @livewireStyles
-    <link href="{{ asset('assets/css/select2.min.css') }}" rel="stylesheet" type="text/css"/>
-    <link href="{{ asset('assets/css/jquery.dataTables.min.css') }}" rel="stylesheet" type="text/css"/>
-    <link href="{{ asset('assets/css/jquery.dataTables.select.min.css') }}" rel="stylesheet" type="text/css"/>
+    <link href="{{ asset('assets/css/select2.min.css') }}" rel="stylesheet" type="text/css" />
+    <link href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css" rel="stylesheet" type="text/css" />
 @endpush
 @section('content')
     <section class="section">
@@ -91,7 +90,6 @@
         let companiesUrl = "{{ route('company.index') }}";
         let getCompaniesUrl = "{{ route('get.companies.data') }}";
     </script>
-    <script src="{{ asset('assets/js/select2.min.js') }}"></script>
-    <script src="{{asset('assets/js/companies/companies.js?v=2.1')}}"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+    <script src="{{asset('assets/js/companies/companies.js?v=2.7')}}"></script>
 @endpush
-
